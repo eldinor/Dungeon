@@ -1,0 +1,11 @@
+Model Information:
+* title:	Torch
+* source:	https://sketchfab.com/3d-models/torch-d47f1a85c4c846a392cc1d1afca15295
+* author:	DivyeSh PanchAl (https://sketchfab.com/DivyeSh.PanchAl)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Torch" (https://sketchfab.com/3d-models/torch-d47f1a85c4c846a392cc1d1afca15295) by DivyeSh PanchAl (https://sketchfab.com/DivyeSh.PanchAl) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
