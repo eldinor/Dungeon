@@ -26,9 +26,20 @@ canvas.onclick = () => canvas.requestPointerLock()
 
 const noise2D = createNoise2D();
 
-// Associate a Babylon Engine to it.
-const engine = new Engine(canvas);
+async function createEngine() {
+  if (await WebGPUEngine.IsSupportedAsync) {
+    const engine = new WebGPUEngine(canvas);
 
+    await engine.initAsync()
+
+    return engine;
+  }
+
+  return new Engine(canvas)
+}
+
+// Associate a Babylon Engine to it.
+const engine = await createEngine()
 // await engine.initAsync();
 
 // Create our first scene.
