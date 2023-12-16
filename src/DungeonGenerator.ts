@@ -1,5 +1,9 @@
-import { Mesh, ShadowGenerator, Vector3 } from '@babylonjs/core';
+import { Mesh, ShadowGenerator, PhysicsAggregate,
+    PhysicsShapeType, SimplificationType, Vector3, MeshBuilder, AbstractMesh, Scene } from '@babylonjs/core';
 import dungeoneer from 'dungeoneer'
+
+
+
 
 type DungeonConstructor = {
     pillarMesh : Mesh,
@@ -32,14 +36,16 @@ type PlaceArgs = {
 export default class DungeonGenerator {
     private dungeon : Record<string, any>;
     private options : Record<string, any>;
-    private wallMeshes : Mesh[] = [];
-    private floorMeshes : Mesh[] = [];
+    // private wallMeshes : Mesh[] = [];
+    // private floorMeshes : Mesh[] = [];
     private shadows : ShadowGenerator;
+    private scene: Scene;
     private pillarCounter : number = 0;
 
-    constructor(size: number, options : DungeonConstructor, shadows: ShadowGenerator) {
+    constructor(size: number, options : DungeonConstructor, shadows: ShadowGenerator, scene: Scene) {
         this.options = options;
         this.shadows = shadows;
+        this.scene   = scene;
         this.dungeon = dungeoneer.build({
             width: size,
             height: size
@@ -87,9 +93,12 @@ export default class DungeonGenerator {
     
             if (neighbor?.type === 'floor' && (object.x === neighbor.x || object.y === neighbor.y)) {
                 if (this.pillarCounter % 2 === 0) {
-                    const pillar = this.options.pillarMesh.clone('pillar');
+                    const pillar = this.options.pillarMesh.createInstance('pillar');
 
-                    pillar.receiveShadows = true;
+                    pillar.isOccluded = true;
+                    pillar.occlusionType = AbstractMesh.OCCLUSION_TYPE_STRICT;
+                    pillar.checkCollisions = true;
+
                     this.shadows.addShadowCaster(pillar);
 
                     this.placeMesh({ object, neighbor, decoration: { indent: 1.85, moveFromCenter: 5 }, mesh: pillar })
@@ -98,9 +107,12 @@ export default class DungeonGenerator {
                 for (const decoration of this.options.decorMeshes) {
                     if (Math.random() > decoration.chance) continue;
 
-                    const decorMesh = decoration.mesh.clone(decoration?.name);
+                    const decorMesh = decoration.mesh.createInstance(decoration?.name);
 
-                    decorMesh.receiveShadows = true;
+                    decorMesh.isOccluded = true;
+                    decorMesh.occlusionType = AbstractMesh.OCCLUSION_TYPE_STRICT;
+                    
+                    decorMesh.checkCollisions = true;
                     this.shadows.addShadowCaster(decorMesh);
 
                     this.placeMesh({ object, neighbor, decoration, mesh: decorMesh })
@@ -113,45 +125,59 @@ export default class DungeonGenerator {
 
     public build() : Record<string, any> {
         const startPositions = [];
+        // let counter = 0;
 
         for (const tile of this.dungeon.tiles) {
             for (const object of tile) {
               if (object.type === 'wall') {
-                this.seedDecorations(object)
-                const box = this.options.wallMesh.clone('wall');
+                if (!Object.values(object.neighbours).some(({ type } : any) => type === 'floor' || type === 'door')) continue;
 
+                this.seedDecorations(object)
+                const box = this.options.wallMesh.createInstance('wall');
+
+                this.shadows.addShadowCaster(box);
                 box.position.x = (object.x * this.options.blockSize);
                 box.position.z = (object.y * this.options.blockSize);
+                box.checkCollisions = true;
+                
 
-                this.wallMeshes.push(box)
+                // this.wallMeshes.push(box)
               };
           
               if (object.type === 'floor' || object.type === 'door') {
-                startPositions.push(new Vector3(object.x * this.options.blockSize, 5, object.y * this.options.blockSize));
+                startPositions.push(new Vector3(object.x * this.options.blockSize, 2, object.y * this.options.blockSize));
 
-                const box = this.options.floorMesh.clone('floor');
+                const box = this.options.floorMesh.createInstance('floor');
                 box.rotation.x = Math.PI / 2;
                 box.position.y = -(this.options.blockSize / 2);
                 box.position.x = object.x * this.options.blockSize;
                 box.position.z = object.y * this.options.blockSize;
+                box.checkCollisions = true;
+
+                new PhysicsAggregate(box, PhysicsShapeType.BOX, { mass: 0 }, this.scene)
           
-                const roof = this.options.floorMesh.clone('roof');
+                const roof = this.options.floorMesh.createInstance('roof');
                 roof.rotation.x = Math.PI / 2;
                 roof.position.y = this.options.blockSize / 2;
                 roof.position.x = object.x * this.options.blockSize;
                 roof.position.z = object.y * this.options.blockSize;
+                roof.checkCollisions = true;
+
+                this.shadows.addShadowCaster(box);
+                this.shadows.addShadowCaster(roof);
           
-                this.floorMeshes.push(box)
-                this.wallMeshes.push(roof)
+                // this.floorMeshes.push(box)
+                // this.wallMeshes.push(roof)
               }
 
               this.pillarCounter++
+            //   counter++;
             }
         }
 
-        const wallMesh = Mesh.MergeMeshes(this.wallMeshes);
-        const floorMesh = Mesh.MergeMeshes(this.floorMeshes);
+        // const wallMesh = Mesh.MergeMeshes(this.wallMeshes);
+        // const floorMesh = Mesh.MergeMeshes(this.floorMeshes);
 
-        return { startPositions, wallMesh, floorMesh }
+        return { startPositions }
     }
 }

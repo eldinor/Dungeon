@@ -1,9 +1,14 @@
 import { ArcRotateCamera, FreeCamera } from '@babylonjs/core/Cameras';
 import { createNoise2D } from 'simplex-noise';
 import { SkyMaterial, FurMaterial } from '@babylonjs/materials'
-import { WebGPUEngine, ShadowGenerator, SimplificationType, PointLight, PBRMaterial, SceneLoader, Engine, MeshBuilder, AbstractMesh, Texture, Vector2, Color3, Mesh } from '@babylonjs/core';
+import { 
+  WebGPUEngine, ShadowGenerator, SimplificationType, 
+  PointLight, PBRMaterial, SceneLoader, Engine, 
+  MeshBuilder, HavokPlugin, Texture, PhysicsAggregate, 
+  Color3, Mesh, PhysicsShapeType } from '@babylonjs/core';
 import { HemisphericLight } from '@babylonjs/core/Lights/hemisphericLight';
 import { Vector3 } from '@babylonjs/core/Maths/math.vector';
+import HavokPhysics from "@babylonjs/havok";
 import Grass from './grass';
 import { DynamicTerrain } from './dynamicTerrain';
 import dungeoneer from 'dungeoneer'
@@ -13,6 +18,7 @@ import DungeonGenerator from './DungeonGenerator';
 import { OBJFileLoader, GLTFFileLoader } from 'babylonjs-loaders';
 
 import { GridMaterial } from '@babylonjs/materials/grid/gridMaterial';
+import { reverse } from 'dns';
 
 SceneLoader.RegisterPlugin(new OBJFileLoader() as any)
 SceneLoader.RegisterPlugin(new GLTFFileLoader() as any)
@@ -42,10 +48,20 @@ async function createEngine() {
 const engine = await createEngine()
 // await engine.initAsync();
 
+
+window.electron.send('getPhysicEngine');
+
+
+const havokInstance = await new Promise(resolve => {
+  window.electron.on('returnPhysicEngine', async (_, binary) => resolve(await HavokPhysics({ wasmBinary: binary})))
+})
+
+
 // Create our first scene.
 const scene = new Scene(engine);
 
 scene.useRightHandedSystem = true;
+scene.enablePhysics(new Vector3(0, -9.81, 0), new HavokPlugin(true, havokInstance));
 
 // // This targets the camera to scene origin
 // camera.setTarget(Vector3.Zero());
@@ -135,7 +151,17 @@ torchLight.diffuse = new Color3(1, 0.3, 0.05)
 const shadows = new ShadowGenerator(1024, torchLight);
 shadows.useExponentialShadowMap = true
 
+floor.material = wallMaterial;
+floor.material.maxSimultaneousLights = 12;
+floor.checkCollisions = true;
+floor.receiveShadows = true;
+// shadows.addShadowCaster(floor)
 
+wall.material = wallMaterial;
+wall.material.maxSimultaneousLights = 12;
+wall.checkCollisions = true;
+wall.receiveShadows = true;
+// shadows.addShadowCaster(wall)
 
 const torch = scene.getMeshByName('torch') as Mesh
 const barrel = scene.getMeshByName('barrel') as Mesh
@@ -158,44 +184,33 @@ const skeleton = Mesh.MergeMeshes([
 console.log(scene)
 // throw new Error()
 
-// rack.isOccluded = true;
-// rack.occlusionType = AbstractMesh.OCCLUSION_TYPE_STRICT;
-// rack.checkCollisions = true;
-// rack.showBoundingBox = true
-
-cage.isOccluded = true;
 cage.scaling = new Vector3(2.5, 2.5, 2.5)
-cage.occlusionType = AbstractMesh.OCCLUSION_TYPE_STRICT;
 cage.checkCollisions = true;
+cage.receiveShadows = true;
 
 bone.scaling = new Vector3(3, 3, 3);
-bone.isOccluded = true;
-bone.occlusionType = AbstractMesh.OCCLUSION_TYPE_STRICT;
+bone.receiveShadows = true;
 // bone.showBoundingBox = true;
 
-barrel.isOccluded = true;
-barrel.occlusionType = AbstractMesh.OCCLUSION_TYPE_STRICT;
 barrel.checkCollisions = true;
+barrel.receiveShadows = true;
 
-web.isOccluded = true;
-web.occlusionType = AbstractMesh.OCCLUSION_TYPE_STRICT;
+
 web.rotation  = new Vector3(Math.PI / 2, 0, 0);
+web.receiveShadows = true;
 // web.showBoundingBox = true;
 
-
-pillar.isOccluded = true;
-pillar.occlusionType = AbstractMesh.OCCLUSION_TYPE_STRICT;
 pillar.checkCollisions = true;
 pillar.scaling = new Vector3(3.1,3.1,3.1)
 pillar.position = new Vector3(0,-10,0)
-// torch.showBoundingBox = true;
+pillar.receiveShadows = true
+pillar.setParent(null)
+
 torch.scaling = new Vector3(0.02,0.02,0.02);
 torch.rotation = new Vector3(0.37,0,0)
-torch.isOccluded = true;
-torch.occlusionType = AbstractMesh.OCCLUSION_TYPE_STRICT;
+torch.receiveShadows = true;
 
-skeleton.isOccluded = true;
-skeleton.occlusionType = AbstractMesh.OCCLUSION_TYPE_STRICT;
+skeleton.receiveShadows = true;
 skeleton.checkCollisions = true;
 
 // rack.simplify([
@@ -246,11 +261,11 @@ torch.simplify([
   { distance:500, quality:0.1 }
 ], false, SimplificationType.QUADRATIC)
 
-const dungeonBuilder = new DungeonGenerator(20, {
-  pillarMesh: scene.getMeshByName('pillar') as Mesh,
-  floorMesh: MeshBuilder.CreateBox('box', { height: MAP_SIZE, width: MAP_SIZE }, scene),
-  wallMesh: MeshBuilder.CreateBox('box', { size: MAP_SIZE }, scene),
-  doorMesh: MeshBuilder.CreateBox('box', { height: MAP_SIZE, width: MAP_SIZE }, scene),
+const dungeonBuilder = new DungeonGenerator(30, {
+  pillarMesh: pillar,
+  floorMesh: floor,
+  wallMesh: wall,
+  doorMesh: floor,
   blockSize : 10,
   decorMeshes : [
     { chance: 0.5, mesh: torch, indent: 1.84, name: 'torch', yAxis: 2.5, rotateByX: -(Math.PI / 2), rotateByZ: Math.PI },
@@ -261,35 +276,35 @@ const dungeonBuilder = new DungeonGenerator(20, {
     { chance: 0.1, mesh: bone, name: 'bone', yAxis: -4.45 },
     { chance: 0.2, mesh: web, indent: 2, name: 'web', yAxis: 3.2, moveFromCenter: 3, rotateByZ: -(Math.PI / 2) }
   ]
-}, shadows)
+}, shadows, scene)
 
 
 const { startPositions, wallMesh, floorMesh } = dungeonBuilder.build()
 
 
-floor.dispose()
-wall.dispose()
-torch.dispose()
-barrel.dispose()
-web.dispose()
-pillar.dispose()
+// floor.dispose()
+// wall.dispose()
+// torch.dispose()
+// barrel.dispose()
+// web.dispose()
+// pillar.dispose()
 
 
-if (floorMesh) {
-  floorMesh.material = wallMaterial;
-  floorMesh.material.maxSimultaneousLights = 12;
-  floorMesh.checkCollisions = true;
-  floorMesh.receiveShadows = true;
-  shadows.addShadowCaster(floorMesh)
-}
+// if (floorMesh) {
+//   floorMesh.material = wallMaterial;
+//   floorMesh.material.maxSimultaneousLights = 12;
+//   floorMesh.checkCollisions = true;
+//   floorMesh.receiveShadows = true;
+//   shadows.addShadowCaster(floorMesh)
+// }
 
-if (wallMesh) {
-  wallMesh.material = wallMaterial;
-  wallMesh.material.maxSimultaneousLights = 12;
-  wallMesh.checkCollisions = true;
-  wallMesh.receiveShadows = true;
-  shadows.addShadowCaster(wallMesh)
-}
+// if (wallMesh) {
+//   wallMesh.material = wallMaterial;
+//   wallMesh.material.maxSimultaneousLights = 12;
+//   wallMesh.checkCollisions = true;
+//   wallMesh.receiveShadows = true;
+//   shadows.addShadowCaster(wallMesh)
+// }
 
 
 if (!startPositions?.[0]) throw new Error('Position for start is not exists')
@@ -323,10 +338,12 @@ camera.attachControl(canvas, true)
 // const terrain2 = new DynamicTerrain("terrain", params2, scene)
 // const ground = new StandardMaterial("grass", scene);
 
-new CharacterController('FPS', camera, scene, [ 'floor_merged' ])
-
+new CharacterController('FPS', camera, scene, [ 'floor' ])
 
 torchLight.parent = camera;
+
+
+// new PhysicsAggregate(cube, PhysicsShapeType.BOX, { mass: 0 }, scene)
 
 // ground.diffuseTexture = new Texture('/sameless.jpg', scene);
 // ground.diffuseTexture.uScale = 20.0;
@@ -363,4 +380,5 @@ scene.registerBeforeRender(() => {
 // Render every frame
 engine.runRenderLoop(() => {
   scene.render();
+  console.log(engine.getFps())
 });

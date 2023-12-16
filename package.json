@@ -26,6 +26,7 @@
   "license": "ISC",
   "dependencies": {
     "@babylonjs/core": "^6.29.1",
+    "@babylonjs/havok": "^1.3.0",
     "babylonjs": "^6.32.1",
     "babylonjs-loaders": "^6.32.1",
     "dungeoneer": "^2.1.5",

@@ -32,4 +32,13 @@ app.whenReady().then(async () => {
     window.removeMenu();
     window.loadFile(path.join(__dirname, 'index.html'));
   }
+
+  ipcMain.on('getPhysicEngine', async (event: any, _: any) => {
+    const wasm = path.join(__dirname, '../node_modules/@babylonjs/havok/lib/esm/HavokPhysics.wasm');
+
+    const binary = await fs.readFile(wasm);
+  
+    event.reply('returnPhysicEngine', binary)
+  })
+ 
 })
