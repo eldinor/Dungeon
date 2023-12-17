@@ -1,5 +1,7 @@
-import { Mesh, ShadowGenerator, PhysicsAggregate,
-    PhysicsShapeType, SimplificationType, Vector3, MeshBuilder, AbstractMesh, Scene } from '@babylonjs/core';
+import { 
+    Mesh, ShadowGenerator, SimplificationType, Vector3,
+    MeshBuilder, AbstractMesh, Scene 
+} from '@babylonjs/core';
 import dungeoneer from 'dungeoneer'
 
 
@@ -99,6 +101,8 @@ export default class DungeonGenerator {
                     this.shadows.addShadowCaster(pillar);
 
                     this.placeMesh({ object, neighbor, decoration: { indent: 1.85, moveFromCenter: 5 }, mesh: pillar })
+
+                    pillar.freezeWorldMatrix()
                 }
                 
                 for (const decoration of this.options.decorMeshes) {
@@ -113,6 +117,8 @@ export default class DungeonGenerator {
                     this.shadows.addShadowCaster(decorMesh);
 
                     this.placeMesh({ object, neighbor, decoration, mesh: decorMesh })
+
+                    decorMesh.freezeWorldMatrix()
 
                     if (decoration?.exclusive) break;
                 }
@@ -136,6 +142,7 @@ export default class DungeonGenerator {
                 box.position.z = (object.y * this.options.blockSize);
                 box.checkCollisions = true;
                 
+                box.freezeWorldMatrix()
               };
 
               if (object.type === 'door') {
@@ -149,6 +156,8 @@ export default class DungeonGenerator {
                 this.shadows.addShadowCaster(arch);
 
                 if (object.neighbours?.n?.type === 'wall' && object.neighbours?.s?.type === 'wall') arch.rotation.y = -(Math.PI / 2)
+
+                arch.freezeWorldMatrix()
               }
           
               if (object.type === 'floor' || object.type === 'door') {
@@ -160,8 +169,6 @@ export default class DungeonGenerator {
                 box.position.x = object.x * this.options.blockSize;
                 box.position.z = object.y * this.options.blockSize;
                 box.checkCollisions = true;
-
-                new PhysicsAggregate(box, PhysicsShapeType.BOX, { mass: 0 }, this.scene)
           
                 const roof = this.options.floorMesh.createInstance('roof');
                 roof.rotation.x = Math.PI / 2;
@@ -172,6 +179,9 @@ export default class DungeonGenerator {
 
                 this.shadows.addShadowCaster(box);
                 this.shadows.addShadowCaster(roof);
+
+                box.freezeWorldMatrix()
+                roof.freezeWorldMatrix()
               }
 
               this.pillarCounter++

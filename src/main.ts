@@ -5,7 +5,7 @@ import {
   WebGPUEngine, ShadowGenerator, SimplificationType, 
   PointLight, PBRMaterial, SceneLoader, Engine, 
   MeshBuilder, HavokPlugin, Texture, PhysicsAggregate, 
-  Color3, Mesh, PhysicsShapeType } from '@babylonjs/core';
+  Color3, Mesh, PhysicsShapeType, ScenePerformancePriority } from '@babylonjs/core';
 import { HemisphericLight } from '@babylonjs/core/Lights/hemisphericLight';
 import { Vector3 } from '@babylonjs/core/Maths/math.vector';
 import HavokPhysics from "@babylonjs/havok";
@@ -60,6 +60,8 @@ const havokInstance = await new Promise(resolve => {
 // Create our first scene.
 const scene = new Scene(engine);
 
+
+// scene.performancePriority = ScenePerformancePriority.Intermediate;
 scene.useRightHandedSystem = true;
 scene.enablePhysics(new Vector3(0, -9.81, 0), new HavokPlugin(true, havokInstance));
 
@@ -162,6 +164,7 @@ wall.material = wallMaterial;
 wall.material.maxSimultaneousLights = 12;
 wall.checkCollisions = true;
 wall.receiveShadows = true;
+
 // shadows.addShadowCaster(wall)
 
 const torch = scene.getMeshByName('torch') as Mesh
@@ -182,9 +185,6 @@ const skeleton = Mesh.MergeMeshes([
   scene.getMeshByName("skeleton_primitive3") as Mesh,
   scene.getMeshByName("skeleton_primitive4") as Mesh
 ]) as Mesh
-
-console.log(scene)
-// throw new Error()
 
 cage.scaling = new Vector3(2.5, 2.5, 2.5)
 cage.checkCollisions = true;
@@ -382,18 +382,17 @@ skyMaterial.rayleigh = 2;
 const skybox = MeshBuilder.CreateBox("skyBox", { size: 10000.0 }, scene);
 skybox.material = skyMaterial;
 
-
 window.addEventListener("resize", () => engine.resize());
 
 scene.registerBeforeRender(() => {
-    scene.meshes.forEach(mesh => {
-      if (mesh?.isOccluded) mesh.getChildren()?.[0]?.setEnabled(false)
-      else mesh.getChildren()?.[0]?.setEnabled(true)
-    })
+    // scene.meshes.forEach(mesh => {
+    //   if (mesh?.isOccluded) mesh.getChildren()?.[0]?.setEnabled(false)
+    //   else mesh.getChildren()?.[0]?.setEnabled(true)
+    // })
 })
 
 // Render every frame
 engine.runRenderLoop(() => {
   scene.render();
-  // console.log(engine.getFps())
+  console.log(engine.getFps())
 });
