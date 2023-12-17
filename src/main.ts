@@ -109,6 +109,7 @@ await SceneLoader.ImportMeshAsync('', '/', 'bone.glb', scene);
 await SceneLoader.ImportMeshAsync('', '/', 'cage.glb', scene);
 await SceneLoader.ImportMeshAsync('', '/', 'rack.glb', scene);
 await SceneLoader.ImportMeshAsync('', '/', 'skeleton.glb', scene);
+await SceneLoader.ImportMeshAsync('', '/', 'arch.glb', scene);
 
 const wallMaterial = new PBRMaterial("wall", scene);
 wallMaterial.albedoTexture = new Texture('/wall.png', scene);
@@ -169,6 +170,7 @@ const pillar = scene.getMeshByName('pillar') as Mesh
 const web = scene.getMeshByName('web') as Mesh
 const bone  = scene.getMeshByName('bone') as Mesh
 const cage = scene.getMeshByName('cage') as Mesh
+const arch = scene.getMeshByName('arch') as Mesh
 // const rack = Mesh.MergeMeshes([
 //   scene.getMeshByName('rack_primitive1') as Mesh,
 //   scene.getMeshByName('rack_primitive0') as Mesh
@@ -204,7 +206,10 @@ pillar.checkCollisions = true;
 pillar.scaling = new Vector3(3.1,3.1,3.1)
 pillar.position = new Vector3(0,-10,0)
 pillar.receiveShadows = true
-pillar.setParent(null)
+
+arch.checkCollisions = true;
+arch.receiveShadows = true;
+arch.rotation = new Vector3(-(Math.PI / 2), 0, Math.PI);
 
 torch.scaling = new Vector3(0.02,0.02,0.02);
 torch.rotation = new Vector3(0.37,0,0)
@@ -253,6 +258,15 @@ barrel.simplify([
   { distance:500, quality:0.1 }
 ], false, SimplificationType.QUADRATIC);
 
+
+arch.simplify([
+  { distance: 100, quality: 0.8 },
+  { distance:250, quality:0.6 }, 
+  { distance:300, quality:0.5 }, 
+  { distance:400, quality:0.3 }, 
+  { distance:500, quality:0.1 }
+], false, SimplificationType.QUADRATIC)
+
 torch.simplify([
   { distance: 100, quality: 0.8 },
   { distance:250, quality:0.6 }, 
@@ -261,10 +275,11 @@ torch.simplify([
   { distance:500, quality:0.1 }
 ], false, SimplificationType.QUADRATIC)
 
-const dungeonBuilder = new DungeonGenerator(30, {
+const dungeonBuilder = new DungeonGenerator(20, {
   pillarMesh: pillar,
   floorMesh: floor,
   wallMesh: wall,
+  archMesh: arch,
   doorMesh: floor,
   blockSize : 10,
   decorMeshes : [
@@ -380,5 +395,5 @@ scene.registerBeforeRender(() => {
 // Render every frame
 engine.runRenderLoop(() => {
   scene.render();
-  console.log(engine.getFps())
+  // console.log(engine.getFps())
 });

@@ -3,13 +3,12 @@ import { Mesh, ShadowGenerator, PhysicsAggregate,
 import dungeoneer from 'dungeoneer'
 
 
-
-
 type DungeonConstructor = {
     pillarMesh : Mesh,
     floorMesh  : Mesh,
     wallMesh   : Mesh,
     doorMesh   : Mesh,
+    archMesh   : Mesh,
     blockSize  : number,
     decorMeshes : { 
         chance: number, 
@@ -36,8 +35,6 @@ type PlaceArgs = {
 export default class DungeonGenerator {
     private dungeon : Record<string, any>;
     private options : Record<string, any>;
-    // private wallMeshes : Mesh[] = [];
-    // private floorMeshes : Mesh[] = [];
     private shadows : ShadowGenerator;
     private scene: Scene;
     private pillarCounter : number = 0;
@@ -125,7 +122,6 @@ export default class DungeonGenerator {
 
     public build() : Record<string, any> {
         const startPositions = [];
-        // let counter = 0;
 
         for (const tile of this.dungeon.tiles) {
             for (const object of tile) {
@@ -140,9 +136,20 @@ export default class DungeonGenerator {
                 box.position.z = (object.y * this.options.blockSize);
                 box.checkCollisions = true;
                 
-
-                // this.wallMeshes.push(box)
               };
+
+              if (object.type === 'door') {
+                const arch = this.options.archMesh.createInstance('arch');
+        
+                arch.checkCollisions = true;
+                arch.position.y = -(this.options.blockSize / 2.15);
+                arch.position.x = (object.x * this.options.blockSize) + 4;
+                arch.position.z = (object.y * this.options.blockSize) + 4;
+                
+                this.shadows.addShadowCaster(arch);
+
+                if (object.neighbours?.n?.type === 'wall' && object.neighbours?.s?.type === 'wall') arch.rotation.y = -(Math.PI / 2)
+              }
           
               if (object.type === 'floor' || object.type === 'door') {
                 startPositions.push(new Vector3(object.x * this.options.blockSize, 2, object.y * this.options.blockSize));
@@ -165,18 +172,11 @@ export default class DungeonGenerator {
 
                 this.shadows.addShadowCaster(box);
                 this.shadows.addShadowCaster(roof);
-          
-                // this.floorMeshes.push(box)
-                // this.wallMeshes.push(roof)
               }
 
               this.pillarCounter++
-            //   counter++;
             }
         }
-
-        // const wallMesh = Mesh.MergeMeshes(this.wallMeshes);
-        // const floorMesh = Mesh.MergeMeshes(this.floorMeshes);
 
         return { startPositions }
     }
