@@ -14,7 +14,15 @@ export default defineConfig((): object => {
   cpSync(path.resolve(__dirname, 'public'), `${OUTPUT_DIR}/public`, { recursive: true })
 
   return {
-    plugins: [ 
+    plugins: [
+      {
+        name: 'fix-recast',
+        transform(code, id) {
+          if (id.includes('recast-detour.js')) {
+            return code.replace(`this["Recast"]`, 'window["Recast"]');
+          }
+        }
+      },
       svgr(),
       electron([
         {
