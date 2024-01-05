@@ -20,6 +20,7 @@ type DungeonConstructor = {
         scaling?: Vector3,
         isThin?: boolean,
         xAxis?: number,
+        withRandomRotation?: boolean,
         yAxis?: number,
         zAxis?: number,
         withShadow?: boolean,
@@ -89,6 +90,8 @@ export default class DungeonGenerator {
             if (decoration?.moveFromCenter) mesh.position.x += decoration?.moveFromCenter;
             if (decoration?.rotateByZ) mesh.rotation.y = decoration.rotateByZ
         }
+
+        if (decoration?.withRandomRotation) mesh.rotation.y += Math.random()
     }
 
     private placeThinMesh({ object, neighbor, decoration, mesh }: PlaceArgs) {

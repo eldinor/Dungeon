@@ -41,6 +41,10 @@ export default class Skeleton {
             if (this.state === 'standing') {
                 const newPosition = this.AI.getRandomPosition()
 
+                const direction = newPosition.subtract(this.mesh.getAbsolutePosition());
+
+                this.mesh.lookAt(direction)
+
                 this.AI.crowd.agentGoto(this.agentIndex, this.AI.navigation.getClosestPoint(newPosition));
             }
 

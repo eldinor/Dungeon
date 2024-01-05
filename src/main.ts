@@ -17,6 +17,8 @@ import CharacterController from './CharacterController';
 import DungeonGenerator from './DungeonGenerator';
 import { OBJFileLoader, GLTFFileLoader } from 'babylonjs-loaders';
 import Door from './meshes/Door';
+import Chain from './meshes/Chain'
+import Gargoyle from './meshes/Gargoyle';
 import AI from './enemies/AI';
 import Skeleton from './enemies/Skeleton';
 
@@ -126,6 +128,8 @@ await SceneLoader.ImportMeshAsync('', '/', 'arch.glb', scene);
 await SceneLoader.ImportMeshAsync('', '/', 'chest.glb', scene);
 // await SceneLoader.ImportMeshAsync('', '/', 'door.glb', scene);
 const door = await new Door(scene).load();
+const chain = await new Chain(scene).load();
+
 
 
 new Sound("background", "/sounds/background.mp3", scene, null, {
@@ -325,7 +329,8 @@ const dungeonBuilder = new DungeonGenerator(20, {
     { chance: 0.05, mesh: cage, indent: 1.65, name: 'cage', isThin: true, moveFromCenter: -3, scaling: new Vector3(2.5, 2.5, 2.5), withShadow: true },
     { chance: 0.03, mesh: chest, indent: 1.7, name: 'chest', exclusive: true, rotateByX: Math.PI / 2, rotateByZ: -Math.PI, withCollision: true, withShadow: true },
     { chance: 0.03, mesh: skeleton, indent: 1.8, name: 'skeleton', yAxis: -5.15, exclusive: true, rotateByX: -(Math.PI / 2), rotateByZ: -Math.PI, withCollision: true, withShadow: true },
-    { chance: 0.2, mesh: barrel, indent: 1.65, name: 'barrel', withCollision: true, withShadow: true },
+    { chance: 0.2, mesh: barrel, indent: 1.65, name: 'barrel', withCollision: true, withShadow: true, withRandomRotation: true },
+    { chance: 0.1, mesh: chain, indent: 1, name: 'chain', yAxis: -4.95, withRandomRotation: true },
     { chance: 0.1, mesh: bone, name: 'bone', isThin: true, yAxis: -4.95, scaling: new Vector3(3, 3, 3) },
     { chance: 0.2, mesh: web, indent: 2, name: 'web', yAxis: 3.7, moveFromCenter: 3, rotateByZ: -(Math.PI / 2) }
   ]
@@ -333,7 +338,6 @@ const dungeonBuilder = new DungeonGenerator(20, {
 
 
 const { navMeshes } = dungeonBuilder.build()
-
 
 // scene.createOrUpdateSelectionOctree()
 
@@ -381,12 +385,14 @@ camera.attachControl(canvas, true)
 // const terrain2 = new DynamicTerrain("terrain", params2, scene)
 // const ground = new StandardMaterial("grass", scene);
 
-const character = MeshBuilder.CreateBox('character')
+const characterMesh = MeshBuilder.CreateBox('character')
 
-new CharacterController(camera, scene, [ 'floor' ], character)
+const character = new CharacterController(camera, scene, [ 'floor' ], characterMesh)
 
 const ai = new AI(navMeshes, 2, 1, scene);
-const skeletonEnemy = new Skeleton(ai, [character])
+const skeletonEnemy = new Skeleton(ai, [ characterMesh ])
+
+const gargoyle = await new Gargoyle(scene, character).load(navMeshes)
 
 
 torchLight.parent = camera;

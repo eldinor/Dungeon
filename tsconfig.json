@@ -6,10 +6,10 @@
     "types": [
       "vite-plugin-svgr/client", 
       "node",
-      "babylonjs",
-      "babylonjs-gui",
-      "babylonjs-materials",
-      "babylonjs-loaders"
+      "@babylonjs/core",
+      "@babylonjs/gui",
+      "@babylonjs/materials",
+      "@babylonjs/loaders"
     ],
     "module": "ESNext",
     "skipLibCheck": true,

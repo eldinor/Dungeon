@@ -1,10 +1,10 @@
 import { ArcRotateCamera, FreeCamera, ActionManager, HighlightLayer, Sound, Scene, ExecuteCodeAction, Mesh, Ray, RayHelper, Scalar, Vector3, Color3 } from "@babylonjs/core";
-import { AdvancedDynamicTexture, TextBlock, Ellipse, Rectangle, Slider, Control } from '@babylonjs/gui'
+import { AdvancedDynamicTexture, TextBlock, Ellipse, Rectangle, Grid, Slider, Control } from '@babylonjs/gui'
 
 export default class CharacterController {
     private scene : Scene;
     private character: Mesh;
-    private speed : number = 0.0025;
+    private speed : number = 0.0018;
     private jumpMeshesIds : string[] = [];
     private camera: ArcRotateCamera | FreeCamera;
     private gravity : Vector3 = new Vector3(0, -0.1, 0);
@@ -23,6 +23,8 @@ export default class CharacterController {
     private counter: number = 0;
     private stepIndex: number = 0;
     private moveKeys: number[];
+    public backpack: Mesh[] = [];
+    private slots: Grid;
 
     constructor(camera: ArcRotateCamera | FreeCamera, scene: Scene, jumpMeshesIds: string[], character: Mesh) {
         this.scene = scene;
@@ -49,7 +51,6 @@ export default class CharacterController {
         this.camera.fov = 1.5;
         this.camera.minZ = 0;
         this.camera.angularSensibility = 500;
-        // this.camera.speed = 2.5;
         this.scene.gravity = this.gravity;
         this.scene.collisionsEnabled = true;
         this.camera.checkCollisions = true;
@@ -76,6 +77,25 @@ export default class CharacterController {
             ...this.camera.keysLeft,
             ...this.camera.keysRight 
         ]
+
+        this.slots = new Grid('backpack');
+        this.slots.width = '400px';
+        this.slots.height = '100px';
+        this.slots.addRowDefinition(1)
+
+        for (let j = 0; j < 4; j++) {
+            this.slots.addColumnDefinition(1 / 4);
+
+            const slot = new Rectangle(`slot${j}`);
+            slot.width = "98%";
+            slot.height = "100%";
+            this.slots.addControl(slot, 0, j);
+        }
+
+        this.slots.verticalAlignment = Control.VERTICAL_ALIGNMENT_BOTTOM;
+
+        this.UI.addControl(this.slots)
+
 
         const aim = new Ellipse();
         aim.width = "5px"
@@ -117,6 +137,12 @@ export default class CharacterController {
         this.scene.onBeforeRenderObservable.add(() => {
             this._updateFPSCharacterPosition();
         }) 
+    }
+
+    public addToBackPack(mesh: Mesh) {
+        if (this.backpack?.length >= 4) return;
+
+        this.backpack.push(mesh)
     }
 
     private focusMesh(mesh: Mesh) {
