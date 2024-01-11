@@ -28,7 +28,8 @@ type DungeonConstructor = {
         rotateByX?: number,
         rotateByZ?: number,
         moveFromCenter?: number
-    }[]
+    }[],
+    roomDecorMeshes? : Mesh[]
 }
 
 type PlaceArgs = {
@@ -52,6 +53,8 @@ export default class DungeonGenerator {
             width: size,
             height: size
         })
+
+        console.log(this.dungeon)
     }
 
     private placeMesh({ object, neighbor, decoration, mesh }: PlaceArgs) {
@@ -139,6 +142,7 @@ export default class DungeonGenerator {
                     pillar.isOccluded = true;
                     pillar.occlusionType = AbstractMesh.OCCLUSION_TYPE_STRICT;
                     pillar.checkCollisions = true;
+                    pillar.isPickable = false;
 
                     this.shadows.addShadowCaster(pillar);
 
@@ -162,6 +166,7 @@ export default class DungeonGenerator {
 
                     decorMesh.isOccluded = true;
                     decorMesh.occlusionType = AbstractMesh.OCCLUSION_TYPE_STRICT;
+                    decorMesh.isPickable = false;
                     
                     if (decoration?.withCollision) decorMesh.checkCollisions = true;
                     if (decoration.withShadow) this.shadows.addShadowCaster(decorMesh);
@@ -198,6 +203,7 @@ export default class DungeonGenerator {
                 box.position = this.setPosition(object)
                 box.position.y = this.options.wallMesh._geometry._extend.minimum.y + this.options.wallMesh._geometry._extend.maximum.y;
                 box.checkCollisions = true;
+                box.isPickable = false;
                 box.isOccluded = true;
                 box.occlusionType = AbstractMesh.OCCLUSION_TYPE_STRICT; 
                 
@@ -241,6 +247,7 @@ export default class DungeonGenerator {
                 box.rotation.x = Math.PI / 2;
                 box.position = this.setPosition(object)
                 box.checkCollisions = true;
+                box.isPickable = true;
 
                 this.navigationMeshes.push(box)
           
@@ -248,6 +255,7 @@ export default class DungeonGenerator {
                 roof.rotation.x = -(Math.PI / 2);
                 roof.position = this.setPosition(object).add(new Vector3(0, this.options.wallMesh._geometry._extend.maximum.y * 2, 0))
                 roof.checkCollisions = true;
+                roof.isPickable = false
 
                 box.freezeWorldMatrix()
                 roof.freezeWorldMatrix()
@@ -255,6 +263,42 @@ export default class DungeonGenerator {
 
               this.pillarCounter++
             }
+        }
+
+        for (const room of this.dungeon.rooms) {
+            for (let w = 0; w < room?.width; w++) {
+                for (let h = 0; h < room?.height; h++) {
+                    if (w % 2 !== 0 || h % 2 !== 0) {
+                        const table = this.options.roomDecorMeshes[0].createInstance('table');
+
+                        table.isOccluded = true;
+                        table.occlusionType = AbstractMesh.OCCLUSION_TYPE_STRICT;
+                        table.checkCollisions = true;
+                        table.isPickable = false;
+            
+                        this.shadows.addShadowCaster(table);
+            
+                        table.position = this.setPosition(room).add(new Vector3(w * (this.options.floorMesh._geometry._extend.maximum.x * 2), 0.85, h * (this.options.floorMesh._geometry._extend.maximum.y * 2)))
+            
+                        table.freezeWorldMatrix()
+                        continue;
+                    };
+
+                    const pillar = this.options.pillarMesh.createInstance('pillar');
+
+                    pillar.isOccluded = true;
+                    pillar.occlusionType = AbstractMesh.OCCLUSION_TYPE_STRICT;
+                    pillar.checkCollisions = true;
+                    pillar.isPickable = false;
+        
+                    this.shadows.addShadowCaster(pillar);
+        
+                    pillar.position = this.setPosition(room).add(new Vector3(w * (this.options.floorMesh._geometry._extend.maximum.x * 2), 0, h * (this.options.floorMesh._geometry._extend.maximum.y * 2)))
+        
+                    pillar.freezeWorldMatrix()
+                }
+            }
+            
         }
 
         return { navMeshes: this.navigationMeshes }

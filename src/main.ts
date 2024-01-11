@@ -18,6 +18,7 @@ import DungeonGenerator from './DungeonGenerator';
 import { OBJFileLoader, GLTFFileLoader } from 'babylonjs-loaders';
 import Door from './meshes/Door';
 import Chain from './meshes/Chain'
+import Table from './meshes/Table';
 import Gargoyle from './meshes/Gargoyle';
 import AI from './enemies/AI';
 import Skeleton from './enemies/Skeleton';
@@ -68,7 +69,7 @@ const scene = new Scene(engine);
 // scene.performancePriority = ScenePerformancePriority.Intermediate;
 scene.useRightHandedSystem = true;
 scene.fogMode = Scene.FOGMODE_EXP;
-scene.fogColor = new BABYLON.Color3(0.9, 0.9, 0.85);
+scene.fogColor = new Color3(0.9, 0.9, 0.85);
 scene.fogDensity = 0.000005;
 // scene.enablePhysics(new Vector3(0, -9.81, 0), new HavokPlugin(true, havokInstance));
 
@@ -129,6 +130,7 @@ await SceneLoader.ImportMeshAsync('', '/', 'chest.glb', scene);
 // await SceneLoader.ImportMeshAsync('', '/', 'door.glb', scene);
 const door = await new Door(scene).load();
 const chain = await new Chain(scene).load();
+const table = await new Table(scene).load();
 
 
 
@@ -138,10 +140,10 @@ new Sound("background", "/sounds/background.mp3", scene, null, {
 })
 
 const wallMaterial = new PBRMaterial("wall", scene);
-wallMaterial.albedoTexture = new Texture('/wall.png', scene);
+wallMaterial.albedoTexture = new Texture('/wall.webp', scene);
 wallMaterial.metallicTexture = new Texture('/Floor_metallicRoughness.png', scene);
 wallMaterial.bumpTexture = new Texture('/Floor_normal.png', scene)
-wallMaterial.ambientTexture = new Texture('/wall_ao.png', scene);
+wallMaterial.ambientTexture = new Texture('/wall_ao.webp', scene);
 // wallMaterial.lightmapTexture = new Texture('/lightmap.png', scene);
 wallMaterial.useRoughnessFromMetallicTextureAlpha = false;
 wallMaterial.useRoughnessFromMetallicTextureGreen = true;
@@ -201,6 +203,7 @@ const bone  = scene.getMeshByName('bone') as Mesh
 const cage = scene.getMeshByName('cage') as Mesh
 const arch = scene.getMeshByName('arch') as Mesh
 const chest = scene.getMeshByName('chest') as Mesh
+
 // const door = Mesh.MergeMeshes([
 //   scene.getMeshByName('door_primitive0') as Mesh,
 //   scene.getMeshByName('door_primitive1') as Mesh
@@ -317,7 +320,7 @@ torch.simplify([
   { distance:500, quality:0.1 }
 ], false, SimplificationType.QUADRATIC)
 
-const dungeonBuilder = new DungeonGenerator(20, {
+const dungeonBuilder = new DungeonGenerator(10, {
   pillarMesh: pillar,
   floorMesh: floor,
   wallMesh: wall,
@@ -333,7 +336,8 @@ const dungeonBuilder = new DungeonGenerator(20, {
     { chance: 0.1, mesh: chain, indent: 1, name: 'chain', yAxis: -4.95, withRandomRotation: true },
     { chance: 0.1, mesh: bone, name: 'bone', isThin: true, yAxis: -4.95, scaling: new Vector3(3, 3, 3) },
     { chance: 0.2, mesh: web, indent: 2, name: 'web', yAxis: 3.7, moveFromCenter: 3, rotateByZ: -(Math.PI / 2) }
-  ]
+  ],
+  roomDecorMeshes: [ table ]
 }, shadows)
 
 
@@ -389,8 +393,8 @@ const characterMesh = MeshBuilder.CreateBox('character')
 
 const character = new CharacterController(camera, scene, [ 'floor' ], characterMesh)
 
-const ai = new AI(navMeshes, 2, 1, scene);
-const skeletonEnemy = new Skeleton(ai, [ characterMesh ])
+// const ai = new AI(navMeshes, 2, 1, scene);
+// const skeletonEnemy = new Skeleton(ai, [ characterMesh ])
 
 const gargoyle = await new Gargoyle(scene, character).load(navMeshes)
 

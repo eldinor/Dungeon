@@ -12,7 +12,6 @@ export default class CharacterController {
     private stamina : number = 1000;
     private highlighter: HighlightLayer;
     private jumpCounter : number = 500;
-    private jumpSpeed : number = 0.01;
     private pickedMesh : Mesh | unknown;
     private actionEvent : ExecuteCodeAction | undefined;
     private UI : AdvancedDynamicTexture;
@@ -142,7 +141,9 @@ export default class CharacterController {
     public addToBackPack(mesh: Mesh) {
         if (this.backpack?.length >= 4) return;
 
+        this.slots.addControl(mesh?.metadata?.image, 0, this.backpack?.length)
         this.backpack.push(mesh)
+        mesh.setEnabled(false)
     }
 
     private focusMesh(mesh: Mesh) {
@@ -198,10 +199,6 @@ export default class CharacterController {
 
     private _isMoving(): boolean {
         return this.moveKeys.some(key => this.inputMap?.[key])
-    }
-
-    private _lerp(a: number, b: number, t: number): number {
-        return a + (b - a) * t;
     }
  
     private _updateFPSCharacterPosition(): void {

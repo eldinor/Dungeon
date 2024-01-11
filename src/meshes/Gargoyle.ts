@@ -1,4 +1,5 @@
 import { Mesh, Scene, SceneLoader, Animation, AbstractMesh, Sound, SimplificationType, Vector3 } from "@babylonjs/core"
+import { Image } from '@babylonjs/gui'
 import CharacterController from "@/CharacterController";
 
 export default class Gargoyle {
@@ -33,6 +34,7 @@ export default class Gargoyle {
             withAction : true,
             actionButton : 'E',
             actionName: 'Pick up',
+            image : new Image('gargoyleHead', '/itemImages/gargoyleHead.png'),
             runAction: this._runAction.bind(this)
         }
 
@@ -51,7 +53,6 @@ export default class Gargoyle {
     }
 
     private _runAction(mesh: Mesh) {
-        mesh.setEnabled(false)
         this.character.addToBackPack(mesh)
     }
 
