@@ -1,30 +1,56 @@
-import { ArcRotateCamera, FreeCamera } from '@babylonjs/core/Cameras';
-import { createNoise2D } from 'simplex-noise';
-import { SkyMaterial, FurMaterial } from '@babylonjs/materials'
 import { 
-  WebGPUEngine, ShadowGenerator, SimplificationType, 
-  PointLight, PBRMaterial, SceneLoader, Engine, Matrix,
-  MeshBuilder, HavokPlugin, Texture, PhysicsAggregate, Sound,
-  SceneOptimizerOptions, HardwareScalingOptimization, SceneOptimizer,
-  Color3, Mesh, PhysicsShapeType, ScenePerformancePriority } from '@babylonjs/core';
-import { HemisphericLight } from '@babylonjs/core/Lights/hemisphericLight';
-import { Quaternion, Vector3 } from '@babylonjs/core/Maths/math.vector';
-import HavokPhysics from "@babylonjs/havok";
-import Grass from './grass';
-import { DynamicTerrain } from './dynamicTerrain';
-import { Scene } from '@babylonjs/core/scene';
-import CharacterController from './CharacterController';
-import DungeonGenerator from './DungeonGenerator';
-import { OBJFileLoader, GLTFFileLoader } from 'babylonjs-loaders';
-import Door from './meshes/Door';
-import Chain from './meshes/Chain'
-import Table from './meshes/Table';
-import Gargoyle from './meshes/Gargoyle';
-import AI from './enemies/AI';
-import Skeleton from './enemies/Skeleton';
+  ArcRotateCamera, 
+  FreeCamera 
+}                                                 from '@babylonjs/core/Cameras';
+import { GridMaterial }                           from '@babylonjs/materials/grid/gridMaterial';
+import { 
+  SkyMaterial, 
+  FurMaterial 
+}                                                 from '@babylonjs/materials'
 
+import { 
+  WebGPUEngine, ShadowGenerator, 
+  SimplificationType, PointLight, 
+  PBRMaterial, SceneLoader, 
+  Engine, Matrix,
+  MeshBuilder, HavokPlugin, 
+  Texture, PhysicsAggregate, 
+  Sound,SceneOptimizerOptions,
+  HardwareScalingOptimization, SceneOptimizer,
+  Color3, Mesh, 
+  PhysicsShapeType, ScenePerformancePriority 
+}                                                 from '@babylonjs/core';
+import { HemisphericLight }                       from '@babylonjs/core/Lights/hemisphericLight';
+import { Quaternion, Vector3 }                    from '@babylonjs/core/Maths/math.vector';
+import HavokPhysics                               from "@babylonjs/havok";
+import { Scene }                                  from '@babylonjs/core/scene';
 
-import { GridMaterial } from '@babylonjs/materials/grid/gridMaterial';
+import { createNoise2D }                          from 'simplex-noise';
+
+import CharacterController                        from './CharacterController';
+import DungeonGenerator                           from './DungeonGenerator';
+import { 
+  OBJFileLoader, 
+  GLTFFileLoader 
+}                                                 from 'babylonjs-loaders';
+import Door                                       from './meshes/Door';
+import Chain                                      from './meshes/Chain'
+import Table                                      from './meshes/Table';
+import Pot                                        from './meshes/Pot';
+import Gargoyle                                   from './meshes/Gargoyle';
+import Chest                                      from './meshes/Chest';
+import Torch                                      from './meshes/Torch';
+import Barrel                                     from './meshes/Barrel';
+import Web                                        from './meshes/Web';
+import Pillar                                     from './meshes/Pillar';
+import Bone                                       from './meshes/Bone';
+import SkeletonMesh                               from './meshes/Skeleton';
+import Cage                                       from './meshes/Cage';
+import Arch                                       from './meshes/Arch';
+import AI                                         from './enemies/AI';
+import Skeleton                                   from './enemies/Skeleton';
+import Grass                                      from './grass';
+import { DynamicTerrain }                         from './dynamicTerrain';
 
 SceneLoader.RegisterPlugin(new OBJFileLoader() as any)
 SceneLoader.RegisterPlugin(new GLTFFileLoader() as any)
@@ -118,21 +144,19 @@ scene.fogDensity = 0.000005;
 // rockMaterial.specularPower = 1000.0;
 // rockMaterial.specularColor = new Color3(0.5, 0.5, 0.5);
 
-await SceneLoader.ImportMeshAsync('', '/', 'torch.glb', scene);
-await SceneLoader.ImportMeshAsync('', '/', 'barrel.glb', scene);
-await SceneLoader.ImportMeshAsync('', '/', 'web.glb', scene);
-await SceneLoader.ImportMeshAsync('', '/', 'pillar.glb', scene);
-await SceneLoader.ImportMeshAsync('', '/', 'bone.glb', scene);
-await SceneLoader.ImportMeshAsync('', '/', 'cage.glb', scene);
-await SceneLoader.ImportMeshAsync('', '/', 'skeleton.glb', scene);
-await SceneLoader.ImportMeshAsync('', '/', 'arch.glb', scene);
-await SceneLoader.ImportMeshAsync('', '/', 'chest.glb', scene);
-// await SceneLoader.ImportMeshAsync('', '/', 'door.glb', scene);
 const door = await new Door(scene).load();
+const web = await new Web(scene).load();
+const pillar = await new Pillar(scene).load();
+const bone = await new Bone(scene).load();
+const cage = await new Cage(scene).load();
+const skeleton = await new SkeletonMesh(scene).load();
+const arch = await new Arch(scene).load();
 const chain = await new Chain(scene).load();
 const table = await new Table(scene).load();
-
-
+const pot = await new Pot(scene).load();
+const chest = await new Chest(scene).load();
+const torch = await new Torch(scene).load();
+const barrel = await new Barrel(scene).load();
 
 new Sound("background", "/sounds/background.mp3", scene, null, {
   loop: true,
@@ -195,66 +219,10 @@ wallMaterial.freeze()
 
 // shadows.addShadowCaster(wall)
 
-const torch = scene.getMeshByName('torch') as Mesh
-const barrel = scene.getMeshByName('barrel') as Mesh
-const pillar = scene.getMeshByName('pillar') as Mesh
-const web = scene.getMeshByName('web') as Mesh
-const bone  = scene.getMeshByName('bone') as Mesh
-const cage = scene.getMeshByName('cage') as Mesh
-const arch = scene.getMeshByName('arch') as Mesh
-const chest = scene.getMeshByName('chest') as Mesh
-
-// const door = Mesh.MergeMeshes([
-//   scene.getMeshByName('door_primitive0') as Mesh,
-//   scene.getMeshByName('door_primitive1') as Mesh
-// ]) as Mesh
-
-
 // const rack = Mesh.MergeMeshes([
 //   scene.getMeshByName('rack_primitive1') as Mesh,
 //   scene.getMeshByName('rack_primitive0') as Mesh
 // ]) as Mesh
-const skeleton = Mesh.MergeMeshes([
-  scene.getMeshByName("skeleton_primitive0") as Mesh,
-  scene.getMeshByName("skeleton_primitive1") as Mesh,
-  scene.getMeshByName("skeleton_primitive2") as Mesh,
-  scene.getMeshByName("skeleton_primitive3") as Mesh,
-  scene.getMeshByName("skeleton_primitive4") as Mesh
-]) as Mesh
-
-cage.scaling = Vector3.One()
-cage.receiveShadows = true;
-cage.position.y = 7.5
-
-bone.scaling = Vector3.One();
-
-barrel.checkCollisions = true;
-barrel.receiveShadows = true;
-
-chest.rotation = new Vector3(-(Math.PI / 2), 0, 0)
-chest.receiveShadows = true;
-// chest.rotation = new Vector3(Math.PI / 2, 0,0)
-
-web.rotation = new Vector3(Math.PI / 2, 0, 0);
-web.receiveShadows = true;
-// web.showBoundingBox = true;
-
-pillar.checkCollisions = true;
-pillar.scaling = new Vector3(3.1,3.1,3.1)
-pillar.position = new Vector3(0,-10,0)
-pillar.receiveShadows = true
-
-arch.checkCollisions = true;
-arch.receiveShadows = true;
-arch.rotation = new Vector3(-(Math.PI / 2), 0, Math.PI);
-
-torch.scaling = new Vector3(0.02,0.02,0.02);
-torch.rotation = new Vector3(0.37,0,0)
-torch.receiveShadows = true;
-// torch.showBoundingBox = true;
-
-skeleton.receiveShadows = true;
-skeleton.checkCollisions = true;
 
 // rack.simplify([
 //   { distance: 100, quality: 0.8 },
@@ -264,61 +232,13 @@ skeleton.checkCollisions = true;
 //   { distance:500, quality:0.1 }
 // ], false, SimplificationType.QUADRATIC)
 
-chest.simplify([
-  { distance: 100, quality: 0.8 },
-  { distance:250, quality:0.6 }, 
-  { distance:300, quality:0.5 }, 
-  { distance:400, quality:0.3 }, 
-  { distance:500, quality:0.1 }
-], false, SimplificationType.QUADRATIC)
-
-skeleton.simplify([
-  { distance: 100, quality: 0.8 },
-  { distance:250, quality:0.6 }, 
-  { distance:300, quality:0.5 }, 
-  { distance:400, quality:0.3 }, 
-  { distance:500, quality:0.1 }
-], false, SimplificationType.QUADRATIC)
-
-bone.simplify([
-  { distance: 100, quality: 0.8 },
-  { distance:250, quality:0.6 }, 
-  { distance:300, quality:0.5 }, 
-  { distance:400, quality:0.3 }, 
-  { distance:500, quality:0.1 }
-], false, SimplificationType.QUADRATIC)
-
-cage.simplify([
-  { distance: 100, quality: 0.8 },
-  { distance:250, quality:0.6 }, 
-  { distance:300, quality:0.5 }, 
-  { distance:400, quality:0.3 }, 
-  { distance:500, quality:0.1 }
-], false, SimplificationType.QUADRATIC)
-
-barrel.simplify([
-  { distance: 100, quality: 0.8 },
-  { distance:250, quality:0.6 }, 
-  { distance:300, quality:0.5 }, 
-  { distance:400, quality:0.3 }, 
-  { distance:500, quality:0.1 }
-], false, SimplificationType.QUADRATIC);
-
-arch.simplify([
-  { distance: 100, quality: 0.8 },
-  { distance:250, quality:0.6 }, 
-  { distance:300, quality:0.5 }, 
-  { distance:400, quality:0.3 }, 
-  { distance:500, quality:0.1 }
-], false, SimplificationType.QUADRATIC)
-
-torch.simplify([
-  { distance: 100, quality: 0.8 },
-  { distance:250, quality:0.6 }, 
-  { distance:300, quality:0.5 }, 
-  { distance:400, quality:0.3 }, 
-  { distance:500, quality:0.1 }
-], false, SimplificationType.QUADRATIC)
+// chest.simplify([
+//   { distance: 100, quality: 0.8 },
+//   { distance:250, quality:0.6 }, 
+//   { distance:300, quality:0.5 }, 
+//   { distance:400, quality:0.3 }, 
+//   { distance:500, quality:0.1 }
+// ], false, SimplificationType.QUADRATIC)
 
 const dungeonBuilder = new DungeonGenerator(10, {
   pillarMesh: pillar,
@@ -332,10 +252,11 @@ const dungeonBuilder = new DungeonGenerator(10, {
     { chance: 0.05, mesh: cage, indent: 1.65, name: 'cage', isThin: true, moveFromCenter: -3, scaling: new Vector3(2.5, 2.5, 2.5), withShadow: true },
     { chance: 0.03, mesh: chest, indent: 1.7, name: 'chest', exclusive: true, rotateByX: Math.PI / 2, rotateByZ: -Math.PI, withCollision: true, withShadow: true },
     { chance: 0.03, mesh: skeleton, indent: 1.8, name: 'skeleton', yAxis: -5.15, exclusive: true, rotateByX: -(Math.PI / 2), rotateByZ: -Math.PI, withCollision: true, withShadow: true },
-    { chance: 0.2, mesh: barrel, indent: 1.65, name: 'barrel', withCollision: true, withShadow: true, withRandomRotation: true },
+    { chance: 0.15, mesh: barrel, indent: 1.65, name: 'barrel', withCollision: true, withShadow: true, withRandomRotation: true },
     { chance: 0.1, mesh: chain, indent: 1, name: 'chain', yAxis: -4.95, withRandomRotation: true },
     { chance: 0.1, mesh: bone, name: 'bone', isThin: true, yAxis: -4.95, scaling: new Vector3(3, 3, 3) },
-    { chance: 0.2, mesh: web, indent: 2, name: 'web', yAxis: 3.7, moveFromCenter: 3, rotateByZ: -(Math.PI / 2) }
+    { chance: 0.2, mesh: web, indent: 2, name: 'web', yAxis: 3.7, moveFromCenter: 3, rotateByZ: -(Math.PI / 2) },
+    { chance: 0.05, mesh: pot, indent: 1.35, name: 'pot', withCollision: true, withShadow: true, rotateByZ: -(Math.PI / 3) },
   ],
   roomDecorMeshes: [ table ]
 }, shadows)
@@ -356,6 +277,7 @@ arch.setEnabled(false)
 chest.setEnabled(false);
 skeleton.setEnabled(false)
 door.setEnabled(false);
+pot.setEnabled(false);
 
 
 if (!navMeshes?.[0]) throw new Error('Position for start is not exists')
